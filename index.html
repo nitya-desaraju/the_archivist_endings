@@ -871,6 +871,9 @@
                     const isSolved = pieces.every(p => parseInt(p.dataset.currentRotation) % 360 === 0);
                     if (isSolved) {
                         isLocked = true;
+
+                        clearTimeout(puzzleTimer);
+                        clearInterval(puzzleTimerInterval);
                         
                         puzzleArea.style.borderColor = '#22c55e'; 
                         pieces.forEach(p => {
@@ -883,7 +886,7 @@
                             puzzleArea.style.border = 'none';
                             
                             setTimeout(() => {
-                                handlePuzzleSuccess(file);
+                                handleTransferSuccess(file); 
                             }, 500);
                         }, 500);
                     }
@@ -893,11 +896,11 @@
 
         //puzzles
         const puzzleList = [
-            numberGridPuzzle,
-            wireAlignmentPuzzle,
-            liquidLevelPuzzle,
-            mazePuzzle,
-            signalSyncPuzzle,
+            // numberGridPuzzle,
+            // wireAlignmentPuzzle,
+            // liquidLevelPuzzle,
+            // mazePuzzle,
+            // signalSyncPuzzle,
             cameraDecryptionPuzzle
         ];
 
