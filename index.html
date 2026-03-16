@@ -223,6 +223,7 @@
             padding: 0; 
             margin: 0 auto;
             min-height: 160px; 
+        }
 
         #main-panel {
             display: flex;
@@ -810,7 +811,7 @@
 
         const cameraDecryptionPuzzle = {
             name: 'Camera Feed Decryption',
-            duration: 15000,
+            duration: 25000,
             instructionText: 'Rotate each piece of the security camera feed until the file is fully decrypted.',
             init: function(file) {
                 const puzzleArea = document.getElementById('puzzle-area');
@@ -826,8 +827,10 @@
                 puzzleArea.style.width = `${cols * squareSize}px`;
                 puzzleArea.style.height = `${rows * squareSize}px`;
                 puzzleArea.style.padding = "0";
-                puzzleArea.style.border = '1px solid #4b5563';
+                puzzleArea.style.margin = "0 auto";
+                puzzleArea.style.border = '1px solid #4b5563'; 
                 puzzleArea.style.overflow = 'hidden';
+                puzzleArea.style.boxSizing = 'content-box';
 
                 const pieces = [];
                 let isLocked = false;
@@ -842,7 +845,7 @@
                         piece.style.backgroundImage = "url('images/camera.png')";
                         piece.style.backgroundSize = "250px 150px"; 
                         piece.style.backgroundPosition = `-${c * squareSize}px -${r * squareSize}px`;
-                        piece.style.outline = '1px solid rgba(75, 85, 99, 0.4)';
+                        piece.style.border = '1px solid rgba(75, 85, 99, 0.4)'; 
                         piece.style.cursor = 'pointer';
                         piece.style.boxSizing = 'border-box';
 
@@ -868,14 +871,17 @@
                     const isSolved = pieces.every(p => parseInt(p.dataset.currentRotation) % 360 === 0);
                     if (isSolved) {
                         isLocked = true;
+                        
+                        puzzleArea.style.borderColor = '#22c55e'; 
                         pieces.forEach(p => {
-                            p.style.outline = '2px solid #22c55e';
-                            p.style.zIndex = '10';
+                            p.style.borderColor = '#22c55e';
+                            p.style.cursor = 'default';
                         });
 
                         setTimeout(() => {
-                            pieces.forEach(p => p.style.outline = 'none');
+                            pieces.forEach(p => p.style.border = 'none');
                             puzzleArea.style.border = 'none';
+                            
                             setTimeout(() => {
                                 handlePuzzleSuccess(file);
                             }, 500);
@@ -887,11 +893,11 @@
 
         //puzzles
         const puzzleList = [
-            // numberGridPuzzle,
-            // wireAlignmentPuzzle,
-            // liquidLevelPuzzle,
-            // mazePuzzle,
-            // signalSyncPuzzle,
+            numberGridPuzzle,
+            wireAlignmentPuzzle,
+            liquidLevelPuzzle,
+            mazePuzzle,
+            signalSyncPuzzle,
             cameraDecryptionPuzzle
         ];
 
