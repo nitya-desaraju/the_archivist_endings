@@ -894,14 +894,102 @@
             }
         };
 
+        const thermalStabilizationPuzzle = {
+            name: 'Thermal Stabilization',
+            duration: 10000,
+            instructionText: 'Adjust the temperature until it matches the desired temperature on the left.',
+            init: function(file) {
+                const puzzleArea = document.getElementById('puzzle-area');
+                puzzleArea.innerHTML = '';
+                
+                const targetTemp = Math.floor(Math.random() * 101);
+                let currentTemp;
+                do {
+                    currentTemp = Math.floor(Math.random() * 101);
+                } while (currentTemp === targetTemp);
+
+                let isLocked = false;
+
+                puzzleArea.className = "flex justify-center items-center space-x-12 w-full h-full font-mono";
+                
+                puzzleArea.innerHTML = `
+                    <div class="text-center">
+                        <p class="text-xs text-gray-500 mb-1">TARGET</p>
+                        <div class="border-2 border-yellow-600 bg-yellow-900 bg-opacity-20 px-4 py-2">
+                            <span id="target-display" class="text-4xl text-yellow-500 font-bold">${targetTemp}°C</span>
+                        </div>
+                    </div>
+
+                    <div class="text-2xl text-gray-700 font-bold">>></div>
+
+                    <div class="text-center">
+                        <p class="text-xs text-gray-500 mb-1">CURRENT</p>
+                        <div class="flex flex-col items-center">
+                            <button id="temp-up" class="hover:text-white text-gray-500 transition-colors mb-1">
+                                <svg width="40" height="20" viewBox="0 0 40 20"><path d="M20 0 L40 20 L0 20 Z" fill="currentColor"/></svg>
+                            </button>
+                            
+                            <div id="current-box" class="border-2 border-gray-600 bg-gray-800 px-4 py-2 min-w-[100px]">
+                                <span id="current-display" class="text-4xl text-gray-300 font-bold">${currentTemp}°C</span>
+                            </div>
+
+                            <button id="temp-down" class="hover:text-white text-gray-500 transition-colors mt-1">
+                                <svg width="40" height="20" viewBox="0 0 40 20"><path d="M20 20 L40 0 L0 0 Z" fill="currentColor"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                const currentDisplay = document.getElementById('current-display');
+                const currentBox = document.getElementById('current-box');
+                const btnUp = document.getElementById('temp-up');
+                const btnDown = document.getElementById('temp-down');
+
+                const updateTemp = (change) => {
+                    if (isLocked) return;
+                    currentTemp += change;
+                    // Constrain between 0 and 100
+                    if (currentTemp > 100) currentTemp = 100;
+                    if (currentTemp < 0) currentTemp = 0;
+                    
+                    currentDisplay.textContent = `${currentTemp}°C`;
+                    checkWin();
+                };
+
+                const checkWin = () => {
+                    if (currentTemp === targetTemp) {
+                        isLocked = true;
+                        
+                        clearTimeout(puzzleTimer);
+                        clearInterval(puzzleTimerInterval);
+
+                        currentDisplay.className = "text-4xl text-green-400 font-bold animate-pulse";
+                        currentBox.style.borderColor = "#22c55e";
+                        btnUp.style.opacity = "0.2";
+                        btnDown.style.opacity = "0.2";
+                        btnUp.style.cursor = "default";
+                        btnDown.style.cursor = "default";
+
+                        setTimeout(() => {
+                            handleTransferSuccess(file);
+                        }, 1000);
+                    }
+                };
+
+                btnUp.onclick = () => updateTemp(1);
+                btnDown.onclick = () => updateTemp(-1);
+            }
+        };
+
         //puzzles
         const puzzleList = [
-            // numberGridPuzzle,
-            // wireAlignmentPuzzle,
-            // liquidLevelPuzzle,
-            // mazePuzzle,
-            // signalSyncPuzzle,
-            cameraDecryptionPuzzle
+            numberGridPuzzle,
+            wireAlignmentPuzzle,
+            liquidLevelPuzzle,
+            mazePuzzle,
+            signalSyncPuzzle,
+            cameraDecryptionPuzzle,
+            thermalStabilizationPuzzle
         ];
 
         function handlePuzzleSuccess(file) {
