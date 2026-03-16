@@ -215,6 +215,20 @@
             animation: tv-off 1.5s ease-in forwards;
             pointer-events: none;
         }
+
+        #puzzle-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0; 
+            margin: 0 auto;
+            min-height: 160px; 
+
+        #main-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
     </style>
 </head>
 
@@ -794,13 +808,91 @@
             }
         };
 
+        const cameraDecryptionPuzzle = {
+            name: 'Camera Feed Decryption',
+            duration: 15000,
+            instructionText: 'Rotate each piece of the security camera feed until the file is fully decrypted.',
+            init: function(file) {
+                const puzzleArea = document.getElementById('puzzle-area');
+                puzzleArea.innerHTML = '';
+                
+                const squareSize = 50;
+                const cols = 5;
+                const rows = 3;
+
+                puzzleArea.style.display = 'grid';
+                puzzleArea.style.gridTemplateColumns = `repeat(${cols}, ${squareSize}px)`;
+                puzzleArea.style.gridTemplateRows = `repeat(${rows}, ${squareSize}px)`;
+                puzzleArea.style.width = `${cols * squareSize}px`;
+                puzzleArea.style.height = `${rows * squareSize}px`;
+                puzzleArea.style.padding = "0";
+                puzzleArea.style.border = '1px solid #4b5563';
+                puzzleArea.style.overflow = 'hidden';
+
+                const pieces = [];
+                let isLocked = false;
+
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const piece = document.createElement('div');
+                        piece.style.transition = 'transform 0.3s ease-in-out';
+                        piece.style.width = `${squareSize}px`;
+                        piece.style.height = `${squareSize}px`;
+                        
+                        piece.style.backgroundImage = "url('images/camera.png')";
+                        piece.style.backgroundSize = "250px 150px"; 
+                        piece.style.backgroundPosition = `-${c * squareSize}px -${r * squareSize}px`;
+                        piece.style.outline = '1px solid rgba(75, 85, 99, 0.4)';
+                        piece.style.cursor = 'pointer';
+                        piece.style.boxSizing = 'border-box';
+
+                        let rotationDegree = (Math.floor(Math.random() * 3) + 1) * 90;
+                        piece.dataset.currentRotation = rotationDegree;
+                        piece.style.transform = `rotate(${rotationDegree}deg)`;
+
+                        piece.onclick = () => {
+                            if (isLocked || gameState.missionComplete) return;
+                            let currentRot = parseInt(piece.dataset.currentRotation);
+                            let newRot = currentRot + 90;
+                            piece.style.transform = `rotate(${newRot}deg)`;
+                            piece.dataset.currentRotation = newRot;
+                            checkWin();
+                        };
+
+                        puzzleArea.appendChild(piece);
+                        pieces.push(piece);
+                    }
+                }
+
+                const checkWin = () => {
+                    const isSolved = pieces.every(p => parseInt(p.dataset.currentRotation) % 360 === 0);
+                    if (isSolved) {
+                        isLocked = true;
+                        pieces.forEach(p => {
+                            p.style.outline = '2px solid #22c55e';
+                            p.style.zIndex = '10';
+                        });
+
+                        setTimeout(() => {
+                            pieces.forEach(p => p.style.outline = 'none');
+                            puzzleArea.style.border = 'none';
+                            setTimeout(() => {
+                                handlePuzzleSuccess(file);
+                            }, 500);
+                        }, 500);
+                    }
+                };
+            }
+        };
+
         //puzzles
         const puzzleList = [
-            numberGridPuzzle,
-            wireAlignmentPuzzle,
-            liquidLevelPuzzle,
-            mazePuzzle,
-            signalSyncPuzzle
+            // numberGridPuzzle,
+            // wireAlignmentPuzzle,
+            // liquidLevelPuzzle,
+            // mazePuzzle,
+            // signalSyncPuzzle,
+            cameraDecryptionPuzzle
         ];
 
         function handlePuzzleSuccess(file) {
