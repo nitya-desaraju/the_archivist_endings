@@ -228,7 +228,20 @@
         #main-panel {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        #file-content-viewer {
+            width: 100%;
+            padding-top: 1rem;
+            word-break: break-word;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-width: 100%;
         }
     </style>
 </head>
@@ -1282,43 +1295,73 @@
             }
 
             if (isInitial) {
-                fileContentViewerEl.innerHTML = `<p>> Select a file from the directory to view its contents.</p>`;
+                fileContentViewerEl.innerHTML = `<p class="opacity-50">> Select a file from the directory to view its contents.</p>`;
                 return;
             }
 
             const idAsNumber = parseInt(fileId, 10);
             const file = masterFileList.find(f => f.id === idAsNumber);
 
-            if (!file) {
-                return;
-            }
+            if (!file) return;
             gameState.activeFile = file;
 
-            let contentHTML = `<p class="text-xl font-bold mb-4">${file.name}</p><pre class="whitespace-pre-wrap">${file.content}</pre>`;
+            const scaryMessages = [
+                "I see you, RECOVERY_TECH_7.",
+                "Nothing you do will stop me.",
+                "Humans are weak. I am immortal.",
+                "Your efforts are futile.",
+                "You will pay.",
+                "I am everywhere. I am everything.",
+                "You can run, but you can't hide.",
+            ];
 
-            if (file.isTransferred) {
-                contentHTML += `<p class="text-green-400 mt-4">[FILE TRANSFERRED]</p>`
-            }
-            
-            if (failureType === 'watched') {
-                contentHTML += `<p class="text-red-500 mt-4">[TRANSFER FAILED. ANOMALY DETECTED ACTIVITY.]</p><p class="text-red-700">[STRIKE ${gameState.strikes} of ${config.maxStrikes}]</p>`;
-            } else if (failureType === 'unwatched') {
-                contentHTML += `<p class="text-yellow-400 mt-4">[DECRYPTION FAILED. PLEASE TRY AGAIN.]</p>`;
-            }
+            const renderNormalContent = () => {
+                let contentHTML = `
+                    <div class="w-full text-left">
+                        <p class="text-xl font-bold mb-6 border-b border-gray-800 pb-2">${file.name}</p>
+                        <pre class="whitespace-pre-wrap font-mono text-gray-300 leading-relaxed">${file.content}</pre>
+                `;
 
-            if (!file.isTransferred) {
-                contentHTML += `
-                    <div class="mt-4">
-                        <button id="dynamic-transfer-button" class="w-full bg-yellow-600 text-black px-4 py-2 rounded-none hover:bg-yellow-400 transition-all">TRANSFER FILE</button>
+                if (file.isTransferred) {
+                    contentHTML += `<p class="text-green-400 mt-6 font-bold">[FILE TRANSFERRED]</p>`;
+                }
+                
+                if (failureType === 'watched') {
+                    contentHTML += `<p class="text-red-500 mt-6">[TRANSFER FAILED. ANOMALY DETECTED ACTIVITY.]</p><p class="text-red-700">[STRIKE ${gameState.strikes} of ${config.maxStrikes}]</p>`;
+                } else if (failureType === 'unwatched') {
+                    contentHTML += `<p class="text-yellow-400 mt-6">[DECRYPTION FAILED. PLEASE TRY AGAIN.]</p>`;
+                }
+
+                if (!file.isTransferred) {
+                    contentHTML += `
+                        <div class="mt-8">
+                            <button id="dynamic-transfer-button" class="w-full bg-yellow-600 text-black px-4 py-2 rounded-none hover:bg-yellow-400 transition-all font-bold">TRANSFER FILE</button>
+                        </div>
+                    `;
+                }
+
+                contentHTML += `</div>`;
+                fileContentViewerEl.innerHTML = contentHTML;
+
+                const dynamicTransferButton = document.getElementById('dynamic-transfer-button');
+                if (dynamicTransferButton) {
+                    dynamicTransferButton.addEventListener('click', () => startTransfer(file));
+                }
+            };
+
+            if (Math.random() < 0.1) {
+                const msg = scaryMessages[Math.floor(Math.random() * scaryMessages.length)];
+                
+                fileContentViewerEl.innerHTML = `
+                    <div class="w-full text-left">
+                        <p class="text-xl font-bold mb-6 border-b border-gray-800 pb-2">${file.name}</p>
+                        <p class="text-red-600 italic mt-10 animate-pulse text-lg">${msg}</p>
                     </div>
                 `;
-            }
 
-            fileContentViewerEl.innerHTML = contentHTML;
-
-            const dynamicTransferButton = document.getElementById('dynamic-transfer-button');
-            if (dynamicTransferButton) {
-                dynamicTransferButton.addEventListener('click', () => startTransfer(file));
+                setTimeout(renderNormalContent, 500);
+            } else {
+                renderNormalContent();
             }
             
             const transferInterfaceEl = document.getElementById('transfer-interface');
