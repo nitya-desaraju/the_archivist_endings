@@ -336,6 +336,7 @@
 
         let puzzleTimer, puzzleTimerInterval;
         let humNodes = null;
+        let endingStaticAudio = null;
 
         function startGlitchHum() {
             if (humNodes || !audioContext) return;
@@ -1652,6 +1653,8 @@
         }
 
         function startDisableSequence() {
+            playSFX('clack');
+            
             gameScreen.innerHTML = `
                 <div id="ending-container" class="w-full h-full flex justify-center items-center text-5xl text-gray-400">
                     <span id="ellipsis"></span>
@@ -1665,6 +1668,8 @@
         }
 
         function showFinalConfirmation() {
+            stopGlitchHum();
+
             const endingContainer = document.getElementById('ending-container');
             endingContainer.innerHTML = `
                 <div class="text-center">
@@ -1700,14 +1705,27 @@
             noBtn.addEventListener('click', handleEndingNo);
         }
 
-        function handleEndingYes() {
+        async function handleEndingYes() {
             gameContainer.innerHTML = '';
-            gameContainer.className = 'w-full h-full relative crt-effect p-2 flex flex-col static-bg';
+            gameContainer.className = 'w-full h-full relative crt-effect p-2 flex flex-col bg-black';
+
             setTimeout(() => {
-                const button = createReturnButton();
-                gameContainer.appendChild(button);
-                gameContainer.classList.add('flex', 'justify-center', 'items-center');
-            }, 3000);
+                const screamAudio = new Audio('images/scream.wav');
+                screamAudio.play();
+
+                screamAudio.onended = () => {
+                    setTimeout(async () => {
+                        gameContainer.classList.add('static-bg');
+                        endingStaticAudio = await playSeamlessLoop('images/static_loud.wav');
+
+                        setTimeout(() => {
+                            const button = createReturnButton();
+                            gameContainer.appendChild(button);
+                            gameContainer.classList.add('flex', 'justify-center', 'items-center');
+                        }, 2000);
+                    }, 1000);
+                };
+            }, 2000);
         }
         
         function handleEndingNo() {
@@ -1810,6 +1828,25 @@
         closeHowToPlayButton.addEventListener('click', () => {
             howToPlayModal.classList.add('hidden');
         });
+
+        async function playSeamlessLoop(url) {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.loop = true;
+            
+            const gainNode = audioContext.createGain();
+            gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+            
+            source.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            source.start(0);
+
+            return { source, gainNode };
+        }
     </script>
 </body>
 </html>
