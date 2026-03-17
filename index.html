@@ -1371,6 +1371,7 @@
         }
 
         function startGame() {
+            stopGlitchHum();
             resetGameState();
             startScreen.classList.add('hidden');
             gameScreen.classList.remove('hidden');
@@ -1654,7 +1655,7 @@
 
         function startDisableSequence() {
             playSFX('clack');
-            
+
             gameScreen.innerHTML = `
                 <div id="ending-container" class="w-full h-full flex justify-center items-center text-5xl text-gray-400">
                     <span id="ellipsis"></span>
@@ -1739,14 +1740,17 @@
             typewriterEffect("thank you...", thankYouEl, () => {
                 setTimeout(() => {
                     document.body.classList.add('shutdown-animation');
-                    
+                    const turnOffAudio = new Audio('images/turn_off.wav');
+                    turnOffAudio.play();
+
                     setTimeout(() => {
                         document.body.style.backgroundColor = "black";
                         document.body.innerHTML = ""; 
 
-                        setTimeout(() => {
+                        setTimeout(async () => {
+                            endingStaticAudio = await playSeamlessLoop('images/static_quiet.wav');
                             const wrapper = document.createElement('div');
-                            wrapper.className = 'crt-effect p-4';
+                            wrapper.className = 'p-4 flex flex-col items-center justify-center';
                             
                             const menuBtn = createReturnButton();
                             wrapper.appendChild(menuBtn);
