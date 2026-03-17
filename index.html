@@ -336,6 +336,66 @@
 
         let puzzleTimer, puzzleTimerInterval;
 
+        function playSFX(type) {
+            if (!audioContext) return;
+            if (audioContext.state === 'suspended') audioContext.resume();
+
+            const now = audioContext.currentTime;
+
+            if (type === 'clack') {
+                const bufferSize = audioContext.sampleRate * 0.05; 
+                const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+
+                const noiseSource = audioContext.createBufferSource();
+                noiseSource.buffer = noiseBuffer;
+
+                const highFilter = audioContext.createBiquadFilter();
+                highFilter.type = 'highpass';
+                highFilter.frequency.setValueAtTime(5000, now);
+                highFilter.Q.setValueAtTime(1, now);
+
+                const highGain = audioContext.createGain();
+                highGain.gain.setValueAtTime(0.2, now);
+                highGain.gain.exponentialRampToValueAtTime(0.01, now + 0.01);
+
+                const bandFilter = audioContext.createBiquadFilter();
+                bandFilter.type = 'bandpass';
+                bandFilter.frequency.setValueAtTime(800, now); 
+                bandFilter.Q.setValueAtTime(2, now);
+
+                const bandGain = audioContext.createGain();
+                bandGain.gain.setValueAtTime(0.3, now);
+                bandGain.gain.exponentialRampToValueAtTime(0.01, now + 0.04); 
+
+                const lowOsc = audioContext.createOscillator();
+                const lowGain = audioContext.createGain();
+                lowOsc.type = 'triangle';
+                lowOsc.frequency.setValueAtTime(120, now); 
+                
+                lowGain.gain.setValueAtTime(0.15, now);
+                lowGain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+                noiseSource.connect(highFilter);
+                highFilter.connect(highGain);
+                highGain.connect(audioContext.destination);
+
+                noiseSource.connect(bandFilter);
+                bandFilter.connect(bandGain);
+                bandGain.connect(audioContext.destination);
+
+                lowOsc.connect(lowGain);
+                lowGain.connect(audioContext.destination);
+
+                noiseSource.start(now);
+                lowOsc.start(now);
+                lowOsc.stop(now + 0.1);
+            }
+        }
+
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -366,6 +426,7 @@
                     button.className = 'bg-gray-800 border border-gray-600 text-2xl aspect-square hover:bg-gray-700 transition-colors';
                     button.textContent = num;
                     button.onclick = () => {
+                        playSFX('clack');
                         if (num === nextExpectedNumber) {
                             nextExpectedNumber++;
                             button.disabled = true;
@@ -434,6 +495,7 @@
                     middleWire.style.cursor = 'pointer';
 
                     middleWire.onclick = (event) => {
+                        playSFX('clack');
                         const target = event.target;
                         let currentRotation = parseFloat(target.dataset.rotation);
                         let newRotation = (currentRotation + rotationIncrement) % 360;
@@ -490,7 +552,7 @@
 
                     const targetZone = document.createElement('div');
                     targetZone.className = 'target-zone';
-                    const targetHeight = 20; // 20% height
+                    const targetHeight = 20;
                     const targetBottom = Math.floor(Math.random() * (80 - targetHeight));
                     targetZone.style.height = `${targetHeight}%`;
                     targetZone.style.bottom = `${targetBottom}%`;
@@ -519,6 +581,7 @@
                     };
 
                     button.onmousedown = () => {
+                        playSFX('clack');
                         stopDrain();
                         intervals.fill = setInterval(() => {
                             let currentHeight = parseFloat(liquid.dataset.height);
@@ -676,6 +739,7 @@
 
                 canvas.onmousedown = (e) => {
                     if (hasFailed) return;
+                    playSFX('clack');
                     const pos = getMousePos(e);
                     const startNodeDist = Math.sqrt(Math.pow(pos.x - (cellSize / 2), 2) + Math.pow(pos.y - (cellSize / 2), 2));
                     if (startNodeDist < cellSize / 4) {
@@ -808,6 +872,7 @@
                     if (ampDiff < tolerance.amp && waveDiff < tolerance.wave && phaseDiff < tolerance.phase) {
                         const allSliders = [ampSlider, waveSlider, phaseSlider];
                         allSliders.forEach(slider => {
+                            slider.onmousedown = () => playSFX('clack');
                             slider.style.backgroundColor = '#16a34a';
                             slider.disabled = true;
                         });
@@ -869,6 +934,7 @@
 
                         piece.onclick = () => {
                             if (isLocked || gameState.missionComplete) return;
+                            playSFX('clack');
                             let currentRot = parseInt(piece.dataset.currentRotation);
                             let newRot = currentRot + 90;
                             piece.style.transform = `rotate(${newRot}deg)`;
@@ -990,8 +1056,14 @@
                     }
                 };
 
-                btnUp.onclick = () => updateTemp(1);
-                btnDown.onclick = () => updateTemp(-1);
+                btnUp.onclick = () => {
+                    playSFX('clack');
+                    updateTemp(1);
+                };
+                btnDown.onclick = () => {
+                    playSFX('clack');
+                    updateTemp(-1);
+                };
             }
         };
 
@@ -1037,7 +1109,7 @@
             movementMediumThreshold: 700000, //1500000
             movementHighThreshold: 1000000, //2000000
             transferTime: 10000,
-            filesToTransfer: 1,
+            filesToTransfer: 20,
             maxStrikes: 3,
             smoothingFactor: 0.04,
             watchedFiles: 12
