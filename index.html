@@ -335,6 +335,58 @@
         const closeHowToPlayButton = document.getElementById('close-how-to-play-button');
 
         let puzzleTimer, puzzleTimerInterval;
+        let humNodes = null;
+
+        function startGlitchHum() {
+            if (humNodes || !audioContext) return;
+
+            const osc = audioContext.createOscillator();
+            const lfo = audioContext.createOscillator();
+            const lfoGain = audioContext.createGain();
+            const mainGain = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(55, audioContext.currentTime);
+
+            lfo.type = 'square'; 
+            lfo.frequency.setValueAtTime(15, audioContext.currentTime); 
+            lfoGain.gain.setValueAtTime(0.03, audioContext.currentTime);
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(150, audioContext.currentTime);
+
+            mainGain.gain.setValueAtTime(0, audioContext.currentTime);
+            mainGain.gain.linearRampToValueAtTime(0.06, audioContext.currentTime + 0.5);
+
+            lfo.connect(lfoGain);
+            lfoGain.connect(mainGain.gain);
+            
+            osc.connect(filter);
+            filter.connect(mainGain);
+            mainGain.connect(audioContext.destination);
+
+            osc.start();
+            lfo.start();
+
+            humNodes = { osc, lfo, mainGain };
+        }
+
+        function stopGlitchHum() {
+            if (!humNodes) return;
+
+            const { osc, lfo, mainGain } = humNodes;
+            const now = audioContext.currentTime;
+
+            mainGain.gain.cancelScheduledValues(now);
+            mainGain.gain.linearRampToValueAtTime(0, now + 0.3);
+
+            setTimeout(() => {
+                osc.stop();
+                lfo.stop();
+                humNodes = null;
+            }, 350);
+        }
 
         function playSFX(type) {
             if (!audioContext) return;
@@ -1091,6 +1143,7 @@
         }
 
         function handlePuzzleFailure(file, reason) {
+            stopGlitchHum();
             clearTimeout(puzzleTimer);
             clearInterval(puzzleTimerInterval);
 
@@ -1310,8 +1363,10 @@
             if (!gameState.missionComplete && gameState.isWatching) {
                 if (isNoisy || isMoving) {
                     glitchBg.classList.add('glitch-warning');
+                    startGlitchHum();
                 } else {
                     glitchBg.classList.remove('glitch-warning');
+                    stopGlitchHum();
                 }
 
                 if (isCriticalNoise || isCriticalMoving) {
@@ -1320,10 +1375,12 @@
                     document.getElementById('puzzle-view').style.display = 'none';
                     document.getElementById('puzzle-instructions').classList.add('hidden');
                     glitchBg.classList.remove('glitch-warning');
+                    stopGlitchHum();
                     handleTransferFailure(gameState.activeFile);
                 }
             } else {
                 glitchBg.classList.remove('glitch-warning');
+                stopGlitchHum();
             }
             
             requestAnimationFrame(gameLoop);
@@ -1494,6 +1551,7 @@
 
             clearTimeout(puzzleTimer);
             clearInterval(puzzleTimerInterval);
+            stopGlitchHum();
 
             if (wasWatched) {
                 gameState.isWatching = false;
@@ -1516,6 +1574,8 @@
         function handleTransferSuccess(file) {
             const transferInterfaceEl = document.getElementById('transfer-interface');
             if(transferInterfaceEl) transferInterfaceEl.classList.add('hidden');
+
+            stopGlitchHum();
 
             if (gameState.isWatching) {
                 gameState.isWatching = false;
@@ -1667,6 +1727,7 @@
         }
 
         function gameOver() {
+            stopGlitchHum();
             gameState.isWatching = false;
             document.getElementById('status-normal').classList.add('hidden');
             document.getElementById('status-terminated').classList.remove('hidden');
