@@ -446,6 +446,37 @@
                 lowOsc.start(now);
                 lowOsc.stop(now + 0.1);
             }
+
+            if (type === 'screech') {
+                const osc = audioContext.createOscillator();
+                const mod = audioContext.createOscillator();
+                const modGain = audioContext.createGain();
+                const mainGain = audioContext.createGain();
+
+                const duration = 0.15; 
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(4500, now); 
+                osc.frequency.exponentialRampToValueAtTime(400, now + duration);
+
+                mod.type = 'square';
+                mod.frequency.setValueAtTime(100, now);
+                modGain.gain.setValueAtTime(2000, now); 
+
+                mainGain.gain.setValueAtTime(0.25, now);
+                mainGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+                mod.connect(modGain);
+                modGain.connect(osc.frequency);
+                osc.connect(mainGain);
+                mainGain.connect(audioContext.destination);
+
+                osc.start();
+                mod.start();
+
+                osc.stop(now + duration);
+                mod.stop(now + duration);
+            }
         }
 
         function shuffle(array) {
@@ -1143,6 +1174,7 @@
         }
 
         function handlePuzzleFailure(file, reason) {
+            playSFX('screech');
             stopGlitchHum();
             clearTimeout(puzzleTimer);
             clearInterval(puzzleTimerInterval);
@@ -1376,6 +1408,7 @@
                     document.getElementById('puzzle-instructions').classList.add('hidden');
                     glitchBg.classList.remove('glitch-warning');
                     stopGlitchHum();
+                    playSFX('screech');
                     handleTransferFailure(gameState.activeFile);
                 }
             } else {
@@ -1539,7 +1572,11 @@
                     timerDisplay.textContent = (timeLeft / 1000).toFixed(1);
                 }, 100);
 
-                puzzleTimer = setTimeout(() => handlePuzzleFailure(file, 'Time ran out'), puzzle.duration);
+                puzzleTimer = setTimeout(() => {
+                    playSFX('screech');
+                    handlePuzzleFailure(file, 'Time ran out');
+                }, puzzle.duration);
+
             } else {
                 timerContainerEl.style.display = 'none';
                 transferWarningEl.classList.add('hidden');
