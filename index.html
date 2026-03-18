@@ -228,7 +228,7 @@
         #main-panel {
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
             width: 100%;
         }
 
@@ -358,11 +358,10 @@
             filter.frequency.setValueAtTime(150, audioContext.currentTime);
 
             mainGain.gain.setValueAtTime(0, audioContext.currentTime);
-            mainGain.gain.linearRampToValueAtTime(0.06, audioContext.currentTime + 0.5);
+            mainGain.gain.linearRampToValueAtTime(0.06, audioContext.currentTime + 0.1);
 
             lfo.connect(lfoGain);
             lfoGain.connect(mainGain.gain);
-            
             osc.connect(filter);
             filter.connect(mainGain);
             mainGain.connect(audioContext.destination);
@@ -376,22 +375,10 @@
         function stopGlitchHum() {
             if (!humNodes) return;
 
-            const { osc, lfo, mainGain } = humNodes;
-            const now = audioContext.currentTime;
-
-            mainGain.gain.cancelScheduledValues(now);
-            
-            mainGain.gain.setValueAtTime(mainGain.gain.value, now); 
-            mainGain.gain.linearRampToValueAtTime(0, now + 0.3);
-
-            setTimeout(() => {
-                if (humNodes) {
-                    osc.stop();
-                    lfo.stop();
-                    mainGain.disconnect();
-                    humNodes = null;
-                }
-            }, 350);
+            humNodes.osc.stop();
+            humNodes.lfo.stop();
+            humNodes.mainGain.disconnect();
+            humNodes = null;
         }
 
         function playSFX(type) {
@@ -1304,7 +1291,6 @@
                 dataArray = new Uint8Array(analyser.frequencyBinCount);
                 return true;
             } catch (err) { 
-                console.error("Media setup failed:", err);
                 permissionError.classList.remove('hidden'); 
                 return false; 
             }
