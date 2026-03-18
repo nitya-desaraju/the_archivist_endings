@@ -380,12 +380,17 @@
             const now = audioContext.currentTime;
 
             mainGain.gain.cancelScheduledValues(now);
+            
+            mainGain.gain.setValueAtTime(mainGain.gain.value, now); 
             mainGain.gain.linearRampToValueAtTime(0, now + 0.3);
 
             setTimeout(() => {
-                osc.stop();
-                lfo.stop();
-                humNodes = null;
+                if (humNodes) {
+                    osc.stop();
+                    lfo.stop();
+                    mainGain.disconnect();
+                    humNodes = null;
+                }
             }, 350);
         }
 
