@@ -454,7 +454,20 @@
                 const modGain = audioContext.createGain();
                 const mainGain = audioContext.createGain();
 
-                const duration = 0.15; 
+                const duration = 0.15;
+                const glitchBg = document.getElementById('glitch-bg');
+
+                if (glitchBg) {
+                    glitchBg.style.transition = 'background-color 0.03s ease-out, opacity 0.03s ease-out';
+                    glitchBg.style.backgroundColor = '#b00000'; 
+                    glitchBg.style.opacity = '0.8';
+
+                    setTimeout(() => {
+                        glitchBg.style.transition = 'background-color 0.12s ease-in, opacity 0.12s ease-in';
+                        glitchBg.style.backgroundColor = ''; 
+                        glitchBg.style.opacity = '';
+                    }, 30);
+                }
 
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(4500, now); 
